@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的全栈之旅</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    /* 全局重置：让字体更清晰 */
+    body {
+        font-family: 'Segoe UI', Roboto, '微软雅黑', sans-serif;
+        background-color: #eaeded; /* 亚马逊标志性的浅灰色背景 */
+        display: flex;
+        justify-content: center;   /* 水平居中 */
+        padding-top: 50px;
+    }
+
+    /* 主卡片样式 */
+.box {
+    background: white;
+    
+    /* 核心修改开始 */
+    width: 90%;          /* 平时占屏幕宽度的 90% (手机上这就很合适) */
+    max-width: 400px;    /* 但是！最大不要超过 400px (防止在电脑上变得无限宽) */
+    margin: 0 auto;      /* 确保它左右居中 */
+    /* 核心修改结束 */
+
+    padding: 20px;       /* 手机上内边距稍微改小一点，留更多空间给内容 */
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border-top: 5px solid #FF9900;
+}
+
+    /* === 新增：两种特殊状态的皮肤 === */
+
+    /* 1. 爆款模式：金色边框 + 金色发光 */
+    .box-success {
+        /* !important 意思是“必须要听我的”，强制覆盖之前的样式 */
+        border-top: 5px solid #FFD700 !important; 
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.6) !important;
+        transition: all 0.5s; /* 让光芒慢慢亮起，更有质感 */
+    }
+
+    /* 2. 亏损模式：红色边框 + 红色微光背景 */
+    .box-danger {
+        border-top: 5px solid #ff4d4d !important;
+        box-shadow: 0 0 20px rgba(255, 77, 77, 0.3) !important;
+        background-color: #fff0f0 !important;
+        transition: all 0.5s;
+    }
+
+    h1 {
+        text-align: center;
+        color: #232f3e; /* 亚马逊深蓝 */
+        font-size: 22px;
+        margin-bottom: 30px;
+    }
+
+    /* --- 核心知识点：Flexbox 布局 --- */
+    .row {
+        display: flex; /* 开启弹性布局！ */
+        gap: 15px;     /* 两个输入框中间留出 15px 的空隙 */
+    }
+
+    .input-group {
+        flex: 1;       /* 意思是对半分，两个输入框宽度一样大 */
+    }
+
+    p {
+        margin: 5px 0;
+        font-size: 14px;
+        color: #555;
+        font-weight: bold;
+    }
+
+    /* 输入框美化 */
+    input {
+        width: 100%;       /* 占满它的父容器 */
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* 这是一个防止布局错乱的重要属性 */
+        transition: all 0.3s;   /* 让变化的动画丝滑过渡 */
+    }
+
+    /* --- 交互状态：当用户点击输入框时 --- */
+    input:focus {
+        outline: none;
+        border-color: #FF9900;       /* 边框变橙色 */
+        box-shadow: 0 0 5px rgba(255, 153, 0, 0.3); /* 发出橙色的光 */
+    }
+
+    /* 按钮美化 */
+    button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 25px;
+        background-color: #FF9900;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    button:hover {
+        background-color: #e88b00; /* 鼠标放上去变深一点 */
+    }
+
+    #result-text {
+        text-align: center;
+        font-size: 18px;
+        margin-top: 20px;
+        min-height: 24px; /* 占个位，防止文字出来时页面跳动 */
+    }
+</style>
+
+
+</head>
+
+
+<script>
+    // === 1. 页面加载时：自动读取上次存的数据 ===
+    // window.onload 意思是：当网页全部加载完那一瞬间，执行里面的代码
+    window.onload = function() {
+        // localStorage.getItem('名字') 意思是：去浏览器缓存里把这个名字对应的数据取出来
+        let savedCost = localStorage.getItem('myCost');
+        let savedPrice = localStorage.getItem('myPrice');
+        let savedFba = localStorage.getItem('myFba');
+
+        // 如果取到了数据（不为空），就把它填回输入框里
+        if (savedCost) { document.getElementById('cost').value = savedCost; }
+        if (savedPrice) { document.getElementById('price').value = savedPrice; }
+        if (savedFba) { document.getElementById('fba').value = savedFba; }
+    }
+
+    // === 2. 点击按钮时：计算 + 保存 ===
+    function calculateProfit() {
+        // 1. 获取输入
+        let cost = parseFloat(document.getElementById('cost').value) || 0;
+        let price = parseFloat(document.getElementById('price').value) || 0;
+        let fba = parseFloat(document.getElementById('fba').value) || 0;
+
+        // 2. 保存数据 (LocalStorage)
+        localStorage.setItem('myCost', cost);
+        localStorage.setItem('myPrice', price);
+        localStorage.setItem('myFba', fba);
+
+        // 3. 计算逻辑
+        let amazonFee = price * 0.15;
+        let profit = price - cost - fba - amazonFee;
+        
+        let margin = 0;
+        if (price > 0) {
+            margin = (profit / price) * 100;
+        }
+
+        // === ✨ 新增逻辑：控制卡片变色 ===
+        // document.querySelector('.box') 意思是：找到那个 class叫 box 的元素
+        let boxElement = document.querySelector('.box');
+
+        // 第一步：先“卸妆”，移除掉之前可能加上的特殊皮肤
+        boxElement.classList.remove('box-success', 'box-danger');
+
+        // 第二步：根据情况“化妆”
+        if (profit < 0) {
+            // 亏钱了 -> 加红色皮肤
+            boxElement.classList.add('box-danger');
+        } else if (margin >= 20) {
+            // 利润率大于20% -> 加金色爆款皮肤
+            boxElement.classList.add('box-success');
+        }
+        // 如果是普通利润(0-20%)，什么都不加，就保持默认
+
+        // === 4. 显示结果 ===
+        let resultElement = document.getElementById('result-text');
+        let detailsHtml = `
+            <br>
+            <small style="color:#666; font-weight:normal;">
+                (扣除 15% 佣金: -¥${amazonFee.toFixed(2)})
+            </small>
+        `;
+
+        if (profit > 0) {
+            resultElement.innerHTML = `
+                🎉 净利: <span style="font-size:24px; color:green">¥${profit.toFixed(2)}</span> 
+                <span style="font-size:16px; color:green">(${margin.toFixed(1)}%)</span>
+                ${detailsHtml}
+            `;
+        } else {
+            resultElement.innerHTML = `
+                😭 亏损: <span style="font-size:24px; color:red">¥${profit.toFixed(2)}</span>
+                ${detailsHtml}
+            `;
+        }
+    }
+
+    /* 📱 专门针对手机的样式 */
+    /* 意思是：当屏幕宽度小于 600px 时，执行下面的代码 */
+    @media (max-width: 600px) {
+        body {
+            padding-top: 20px; /* 顶部留白减少 */
+        }
+        
+        .box {
+            width: 95%;       /* 手机上卡片再宽一点 */
+            padding: 15px;    /* 内边距再紧凑一点 */
+        }
+
+        h1 {
+            font-size: 18px;  /* 标题字号稍微改小 */
+        }
+        
+        /* 让输入框变成了上下排列，而不是左右并排，防止挤压 */
+        .row {
+            flex-direction: column; 
+            gap: 10px;
+        }
+    }
+</script>
+
+
+<body>
+
+    <div class="box">
+    <h1>💰 亚马逊利润计算器</h1>
+    
+    <div class="row">
+        
+        <div class="input-group">
+            <p>进货价 (¥):</p>
+            <input type="number" id="cost" placeholder="0.00">
+        </div>
+
+        <div class="input-group">
+            <p>销售价 (¥):</p>
+            <input type="number" id="price" placeholder="0.00">
+        </div>
+    </div>
+<div class="input-group" style="margin-top: 15px;">
+        <p>FBA 配送杂费 (¥):</p>
+        <input type="number" id="fba" placeholder="例如：25">
+    </div>
+
+    <p id="result-text">毛利将显示在这里</p>
+    <button onclick="calculateProfit()">计算毛利</button>
+</div>
+
+</body>
+</html>
